@@ -1,0 +1,571 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RolePlay Игра</title>
+<style>
+  @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.1.0/latin-400.css');
+  @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.1.0/latin-600.css');
+  @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.1.0/latin-700.css');
+  @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.1.0/latin-800.css');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-x: hidden;
+  }
+  .game-container {
+    width: 100%;
+    max-width: 420px;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Top Bar */
+  .top-bar {
+    background: linear-gradient(135deg, #e94560, #c23152);
+    padding: 12px 16px 10px;
+    box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+    z-index: 10;
+    color: #fff;
+  }
+  .top-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .balance-amount { color: #ffd700; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+  .level-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+  .level-badge .lvl-num { color: #ffd700; }
+  .location-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .xp-container { width: 100%; background: rgba(255,255,255,0.15); border-radius: 10px; height: 6px; margin-bottom: 8px; overflow: hidden; }
+  .xp-fill { height: 100%; background: linear-gradient(90deg, #ffd700, #ffaa00); border-radius: 10px; transition: width 0.5s ease; }
+  .satiety-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+  .satiety-label .val { color: #ffd700; }
+  .satiety-container { width: 100%; background: rgba(255,255,255,0.2); border-radius: 10px; height: 8px; overflow: hidden; }
+  .satiety-fill { height: 100%; background: linear-gradient(90deg, #4ecdc4, #2ecc71); border-radius: 10px; transition: width 0.5s ease, background 0.3s; }
+  .satiety-fill.low { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+
+  /* Screens */
+  .screen { display: none; flex: 1; flex-direction: column; padding: 16px; overflow-y: auto; animation: fadeIn 0.3s ease; padding-bottom: 20px; }
+  .screen.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .street-header { text-align: center; margin-bottom: 12px; }
+  .street-title { color: #fff; font-size: 22px; font-weight: 800; }
+  .street-subtitle { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
+  .nav-chips { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+  .nav-chip { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .nav-chip:hover { background: rgba(255,255,255,0.15); border-color: #fff; }
+  .section-title { color: #e94560; font-size: 15px; font-weight: 700; margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Main Categories */
+  .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+  .cat-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03)); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 14px; text-align: center; cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .cat-card:hover { border-color: #e94560; transform: translateY(-3px); background: rgba(233, 69, 96, 0.1); }
+  .cat-card .cat-icon { font-size: 32px; }
+  .cat-card .cat-label { color: #fff; font-size: 14px; font-weight: 700; }
+  .cat-card .cat-sub { color: rgba(255,255,255,0.4); font-size: 10px; }
+
+  /* Work List */
+  .work-list { display: flex; flex-direction: column; gap: 12px; }
+  .work-item { background: rgba(255,255,255,0.06); border: 1px solid rgba(233, 69, 96, 0.3); border-radius: 16px; padding: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.3s; }
+  .work-item:hover { background: rgba(233, 69, 96, 0.1); transform: translateY(-2px); }
+  .work-item.locked { opacity: 0.4; pointer-events: none; border-color: rgba(255,255,255,0.1); }
+  .work-item .w-icon { font-size: 28px; background: rgba(255,255,255,0.1); padding: 12px; border-radius: 14px; }
+  .work-item .w-info { flex: 1; }
+  .work-item .w-name { color: #fff; font-size: 15px; font-weight: 700; }
+  .work-item .w-sal { color: #ffd700; font-size: 12px; font-weight: 600; }
+  .work-item .w-req { color: #e94560; font-size: 11px; font-weight: 700; background: rgba(233,69,96,0.1); padding: 2px 6px; border-radius: 6px; }
+  .work-item.locked .w-req { color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); }
+
+  /* Assets */
+  .asset-grid { display: grid; gap: 10px; }
+  .asset-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 12px; display: flex; align-items: center; gap: 12px; transition: all 0.3s; }
+  .asset-card.owned { border-color: #4ecdc4; background: rgba(78, 205, 196, 0.08); }
+  .asset-card .a-icon { font-size: 26px; background: rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; }
+  .asset-card .a-info { flex: 1; }
+  .asset-card .a-name { color: #fff; font-size: 14px; font-weight: 700; }
+  .asset-card .a-bonus { color: #ffd700; font-size: 11px; }
+  .asset-btn { background: linear-gradient(135deg, #e94560, #c23152); border: none; border-radius: 12px; padding: 10px 16px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .asset-btn.disabled { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); cursor: not-allowed; }
+  .asset-btn.owned-btn { background: #4ecdc4; color: #111; cursor: default; }
+
+  .class-header { background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 12px; margin: 16px 0 10px; color: #fff; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+  .badge { padding: 2px 6px; border-radius: 6px; font-size: 10px; color: #fff; }
+  .badge.lw { background: #3498db; } .badge.md { background: #f39c12; } .badge.hi { background: #9b59b6; }
+
+  /* Job Screen */
+  .detail-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; background: rgba(255,255,255,0.06); border-radius: 18px; padding: 16px; }
+  .detail-header img { width: 56px; height: 56px; object-fit: cover; border-radius: 14px; border: 2px solid #e94560; background: #222; }
+  .detail-info h2 { color: #fff; font-size: 18px; font-weight: 800; }
+  .detail-info .meta { color: #4ecdc4; font-size: 12px; }
+  .detail-info .reward { color: #ffd700; font-size: 13px; font-weight: 700; }
+
+  .progress-container { margin-bottom: 16px; }
+  .progress-label { display: flex; justify-content: space-between; color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 600; margin-bottom: 6px; }
+  .progress-bar { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #4ecdc4, #2ecc71); border-radius: 10px; transition: width 0.2s ease; }
+
+  .job-tasks-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+  .job-btn { aspect-ratio: 1.2; border-radius: 16px; border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #fff; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .job-btn.correct { border-color: rgba(78, 205, 196, 0.8); background: linear-gradient(135deg, rgba(78, 205, 196, 0.3), rgba(78, 205, 196, 0.1)); animation: pulseAction 1.5s infinite; }
+  @keyframes pulseAction { 0%, 100% { box-shadow: 0 0 0 0 rgba(78, 205, 196, 0.3); } 50% { box-shadow: 0 0 15px 4px rgba(78, 205, 196, 0.2); } }
+  .job-btn.wrong { border-color: rgba(233, 69, 96, 0.4); background: rgba(233, 69, 96, 0.08); }
+  .job-btn .jb-icon { font-size: 30px; }
+  .job-btn .jb-label { font-size: 12px; font-weight: 700; }
+  .job-btn .jb-val { font-size: 10px; color: #ffd700; font-weight: 600; }
+  .job-btn.wrong .jb-val { color: #e94560; }
+
+  .promo-box { background: rgba(255,255,255,0.06); border: 2px dashed rgba(155, 89, 182, 0.3); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .promo-input { width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 12px; color: #fff; font-size: 16px; font-weight: 700; text-align: center; outline: none; transition: all 0.3s; }
+  .promo-btn { background: linear-gradient(135deg, #9b59b6, #8e44ad); border: none; border-radius: 14px; padding: 14px; color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; }
+
+  .back-btn { margin-top: auto; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 14px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s; text-align: center; }
+  .back-btn:hover { background: rgba(255,255,255,0.15); }
+
+  .toast-container { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 8px; width: 90%; max-width: 380px; pointer-events: none; }
+  .toast { background: rgba(255,255,255,0.95); color: #111; padding: 12px 16px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); font-size: 13px; font-weight: 600; text-align: center; animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+  <div class="top-bar">
+    <div class="top-row">
+      <div class="balance-amount">💰 <span id="ui-balance">5000</span>₽</div>
+      <div class="level-badge">⭐ <span class="lvl-num" id="ui-level">1</span></div>
+      <div class="location-badge" id="ui-location">📍 Улица</div>
+    </div>
+    <div class="xp-container"><div class="xp-fill" id="ui-xp-bar" style="width: 0%"></div></div>
+    <div class="satiety-label"><span>Сытость</span><span class="val" id="ui-satiety-val">100%</span></div>
+    <div class="satiety-container"><div class="satiety-fill" id="ui-satiety-bar" style="width: 100%"></div></div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Street -->
+  <div class="screen active" id="screen-street">
+    <div class="street-header">
+      <div class="street-title">Центральная Улица</div>
+      <div class="street-subtitle">Твой город — твои правила!</div>
+    </div>
+    <div class="nav-chips">
+      <span class="nav-chip" onclick="openScreen('kiosk')">🛒 Ларёк</span>
+      <span class="nav-chip" onclick="openScreen('restaurant')">🍽 Ресторан</span>
+      <span class="nav-chip" onclick="openScreen('promo')">🎁 Промокоды</span>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-card" onclick="openScreen('work-list')"><span class="cat-icon">💼</span><span class="cat-label">Работа</span><span class="cat-sub">Зарабатывай</span></div>
+      <div class="cat-card" onclick="openScreen('realestate')"><span class="cat-icon">🏠</span><span class="cat-label">Недвижимость</span><span class="cat-sub">Бонусы</span></div>
+      <div class="cat-card" onclick="openScreen('cars')"><span class="cat-icon">🚗</span><span class="cat-label">Машины</span><span class="cat-sub">Статус</span></div>
+      <div class="cat-card" onclick="showToast('🌆 Город скоро откроется!')"><span class="cat-icon">🏙</span><span class="cat-label">Город</span><span class="cat-sub">Исследование</span></div>
+    </div>
+    <button class="back-btn" onclick="showToast('🚪 Выход недоступен')">🚪 Выход</button>
+  </div>
+
+  <!-- Work List -->
+  <div class="screen" id="screen-work-list">
+    <div class="street-header"><div class="street-title">Работы</div></div>
+    <div class="work-list" id="work-list-container"></div>
+    <button class="back-btn" onclick="openScreen('street')">⬅ На улицу</button>
+  </div>
+
+  <!-- Job Screen -->
+  <div class="screen" id="screen-job">
+    <div class="detail-header">
+      <img src="" id="job-img">
+      <div class="detail-info">
+        <h2 id="job-title">Работа</h2>
+        <div class="meta" id="job-desc">...</div>
+        <div class="reward" id="job-reward-info">...</div>
+      </div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-label"><span>Смена</span><span id="job-progress-val">0%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="job-progress-bar" style="width: 0%"></div></div>
+    </div>
+    <div class="job-tasks-grid" id="job-tasks-grid"></div>
+    <button class="back-btn" onclick="openScreen('work-list')">⬅ К списку работ</button>
+  </div>
+
+  <!-- Real Estate -->
+  <div class="screen" id="screen-realestate">
+    <div class="street-header"><div class="street-title">Недвижимость</div></div>
+    <div style="text-align:center; color:#ffd700; font-size:14px; margin-bottom:12px; font-weight:700;">Текущий бонус: +<span id="re-bonus-display">0</span>%</div>
+    <div class="asset-grid" id="re-list"></div>
+    <button class="back-btn" onclick="openScreen('street')">⬅ На улицу</button>
+  </div>
+
+  <!-- Cars -->
+  <div class="screen" id="screen-cars">
+    <div class="street-header"><div class="street-title">Автосалон</div></div>
+    <div style="text-align:center; color:#ffd700; font-size:14px; margin-bottom:12px; font-weight:700;">Текущий бонус: +<span id="car-bonus-display">0</span>%</div>
+    <div class="class-header"><span class="badge lw">LOW</span> Низкий класс</div>
+    <div class="asset-grid" id="cars-low"></div>
+    <div class="class-header"><span class="badge md">MID</span> Средний класс</div>
+    <div class="asset-grid" id="cars-mid"></div>
+    <div class="class-header"><span class="badge hi">HIGH</span> Высокий класс</div>
+    <div class="asset-grid" id="cars-high"></div>
+    <button class="back-btn" onclick="openScreen('street')">⬅ На улицу</button>
+  </div>
+
+  <!-- Promo -->
+  <div class="screen" id="screen-promo">
+    <div class="street-header"><div class="street-title">🎁 Промокоды</div></div>
+    <div class="promo-box">
+      <input type="text" class="promo-input" id="promo-input" placeholder="Введите код...">
+      <button class="promo-btn" onclick="usePromo()">Активировать</button>
+    </div>
+    <div class="section-title">Активные бонусы</div>
+    <div id="promo-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+    <button class="back-btn" onclick="openScreen('street')">⬅ На улицу</button>
+  </div>
+
+  <!-- Kiosk & Restaurant -->
+  <div class="screen" id="screen-kiosk">
+    <div class="street-header"><div class="street-title">🛒 Ларёк</div></div>
+    <div style="display:grid; gap:10px; margin-bottom:20px;">
+      <div class="asset-card" onclick="buyFood(1500, 20)"><span class="a-icon">🌭</span><div class="a-info"><div class="a-name">Шаурма</div><div class="a-bonus">+20 сытости</div></div><div style="color:#ffd700; font-weight:700; font-size:13px;">1500₽</div></div>
+    </div>
+    <button class="back-btn" onclick="openScreen('street')">⬅ На улицу</button>
+  </div>
+  <div class="screen" id="screen-restaurant">
+    <div class="street-header"><div class="street-title">🍽 Ресторан</div></div>
+    <div style="display:grid; gap:10px; margin-bottom:20px;">
+      <div class="asset-card" onclick="buyFood(15000, 100)"><span class="a-icon">🥩</span><div class="a-info"><div class="a-name">Стейк</div><div class="a-bonus">+100 сытости</div></div><div style="color:#ffd700; font-weight:700; font-size:13px;">15000₽</div></div>
+    </div>
+    <button class="back-btn" onclick="openScreen('street')">⬅ На улицу</button>
+  </div>
+</div>
+
+<script>
+  const state = {
+    balance: 5000, level: 1, xp: 0, xpToNext: 500, satiety: 100,
+    jobProgress: 0, currentJob: null, assets: { re: [], cars: [] },
+    promos: [], promoCode: { used: false }
+  };
+
+  const RE_ITEMS = [
+    { id: 're1', name: 'Квартира-студия', price: 5000, bonus: 5, icon: '🏢' },
+    { id: 're2', name: '1-комн. квартира', price: 20000, bonus: 10, icon: '🏢' },
+    { id: 're3', name: '2-комн. квартира', price: 60000, bonus: 20, icon: '🏠' },
+    { id: 're4', name: 'Частный дом', price: 180000, bonus: 35, icon: '🏡' },
+    { id: 're5', name: 'Таунхаус', price: 500000, bonus: 60, icon: '🏘' },
+    { id: 're6', name: 'Пентхаус', price: 2000000, bonus: 100, icon: '🌇' },
+    { id: 're7', name: 'Вилла у моря', price: 10000000, bonus: 200, icon: '🏖️' },
+    { id: 're8', name: 'Небоскрёб', price: 50000000, bonus: 500, icon: '🏰' }
+  ];
+
+  const CAR_ITEMS = [
+    { id: 'c1', name: 'ВАЗ 2107', price: 5000, bonus: 3, cls: 'lw', icon: '🚗' },
+    { id: 'c2', name: 'Lada Vesta', price: 15000, bonus: 5, cls: 'lw', icon: '🚙' },
+    { id: 'c3', name: 'Kia Rio', price: 35000, bonus: 8, cls: 'lw', icon: '🚙' },
+    { id: 'c4', name: 'Toyota Camry', price: 90000, bonus: 15, cls: 'md', icon: '🚘' },
+    { id: 'c5', name: 'BMW 3 Series', price: 180000, bonus: 25, cls: 'md', icon: '🚘' },
+    { id: 'c6', name: 'Mercedes E-Class', price: 350000, bonus: 40, cls: 'md', icon: '🚘' },
+    { id: 'c7', name: 'Audi A8', price: 800000, bonus: 65, cls: 'hi', icon: '🚐' },
+    { id: 'c8', name: 'Porsche Cayenne', price: 2000000, bonus: 100, cls: 'hi', icon: '🚐' },
+    { id: 'c9', name: 'Lamborghini', price: 5000000, bonus: 180, cls: 'hi', icon: '🏎️' },
+    { id: 'c10', name: 'Bugatti Chiron', price: 25000000, bonus: 400, cls: 'hi', icon: '🏎️' }
+  ];
+
+  const JOBS = [
+    { id: 'dvorik', name: 'Дворник', reqLvl: 1, pay: 100, xp: 50, icon: '🧹', desc: 'Убирай мусор', tasks: [
+      { type: 'c', icon: '🧹', label: 'Мести', val: '+15%' },
+      { type: 'c', icon: '🗑', label: 'Убрать', val: '+12%' },
+      { type: 'w', icon: '📱', label: 'Отдых', val: '-8%' },
+      { type: 'w', icon: '🎮', label: 'Игра', val: '-10%' }
+    ]},
+    { id: 'kassir', name: 'Кассир', reqLvl: 2, pay: 350, xp: 150, icon: '🏪', desc: 'Пробивай товары', tasks: [
+      { type: 'c', icon: '🔍', label: 'Пробить', val: '+12%' },
+      { type: 'c', icon: '💳', label: 'Оплата', val: '+10%' },
+      { type: 'w', icon: '🍩', label: 'Печенька', val: '-10%' },
+      { type: 'w', icon: '💬', label: 'Чат', val: '-12%' }
+    ]},
+    { id: 'waiter', name: 'Официант', reqLvl: 4, pay: 800, xp: 300, icon: '🍽', desc: 'Обслуживай гостей', tasks: [
+      { type: 'c', icon: '📝', label: 'Заказ', val: '+10%' },
+      { type: 'c', icon: '🍵', label: 'Подать', val: '+10%' },
+      { type: 'w', icon: '📵', label: 'Спать', val: '-10%' },
+      { type: 'w', icon: '🔥', label: 'Уронить', val: '-15%' }
+    ]},
+    { id: 'driver', name: 'Водитель', reqLvl: 6, pay: 2500, xp: 600, icon: '🚕', desc: 'Развози людей', tasks: [
+      { type: 'c', icon: '🚦', label: 'Ехать', val: '+8%' },
+      { type: 'c', icon: '👤', label: 'Взять', val: '+8%' },
+      { type: 'w', icon: '😴', label: 'Дремать', val: '-12%' },
+      { type: 'w', icon: '💥', label: 'Авария', val: '-20%' }
+    ]},
+    { id: 'prog', name: 'Программист', reqLvl: 8, pay: 8000, xp: 1500, icon: '💻', desc: 'Пиши код', tasks: [
+      { type: 'c', icon: '💻', label: 'Кодинг', val: '+6%' },
+      { type: 'c', icon: '🐛', label: 'Фикс', val: '+8%' },
+      { type: 'w', icon: '🎮', label: 'Игры', val: '-15%' },
+      { type: 'w', icon: '📺', label: 'Ютуб', val: '-12%' }
+    ]},
+    { id: 'biz', name: 'Бизнесмен', reqLvl: 10, pay: 25000, xp: 3000, icon: '🤵', desc: 'Заключай сделки', tasks: [
+      { type: 'c', icon: '🤝', label: 'Сделка', val: '+5%' },
+      { type: 'c', icon: '📞', label: 'Звонок', val: '+6%' },
+      { type: 'w', icon: '💸', label: 'Трата', val: '-20%' },
+      { type: 'w', icon: '🍹', label: 'Отдых', val: '-15%' }
+    ]}
+  ];
+
+  const els = {
+    balance: document.getElementById('ui-balance'), level: document.getElementById('ui-level'),
+    xpBar: document.getElementById('ui-xp-bar'), satBar: document.getElementById('ui-satiety-bar'),
+    satVal: document.getElementById('ui-satiety-val'), loc: document.getElementById('ui-location'),
+    toast: document.getElementById('toast-container'),
+    jobImg: document.getElementById('job-img'), jobTitle: document.getElementById('job-title'),
+    jobDesc: document.getElementById('job-desc'), jobReward: document.getElementById('job-reward-info'),
+    jobProgBar: document.getElementById('job-progress-bar'), jobProgVal: document.getElementById('job-progress-val'),
+    jobGrid: document.getElementById('job-tasks-grid'), reList: document.getElementById('re-list'),
+    reBonus: document.getElementById('re-bonus-display'), carsLow: document.getElementById('cars-low'),
+    carsMid: document.getElementById('cars-mid'), carsHigh: document.getElementById('cars-high'),
+    carBonus: document.getElementById('car-bonus-display'), workList: document.getElementById('work-list-container')
+  };
+
+  function getBonus() {
+    let b = 0;
+    state.assets.re.forEach(id => { const i = RE_ITEMS.find(x => x.id === id); if(i) b += i.bonus; });
+    state.assets.cars.forEach(id => { const i = CAR_ITEMS.find(x => x.id === id); if(i) b += i.bonus; });
+    return b;
+  }
+
+  function updateUI() {
+    els.balance.textContent = Math.floor(state.balance).toLocaleString();
+    els.level.textContent = state.level;
+    els.xpBar.style.width = `${Math.min(100, (state.xp / state.xpToNext) * 100)}%`;
+    els.satBar.style.width = `${state.satiety}%`;
+    els.satVal.textContent = `${state.satiety}%`;
+    els.satBar.classList.toggle('low', state.satiety <= 30);
+    document.querySelectorAll('.asset-btn').forEach(btn => {
+      const p = parseInt(btn.dataset.price);
+      if (btn.dataset.price && state.balance < p && !btn.parentElement.classList.contains('owned')) {
+        btn.classList.add('disabled');
+      } else if (!btn.parentElement.classList.contains('owned')) {
+        btn.classList.remove('disabled');
+      }
+    });
+  }
+
+  setInterval(() => {
+    if (state.satiety > 0) {
+      state.satiety = Math.max(0, state.satiety - 1);
+      updateUI();
+    }
+  }, 3000);
+
+  function showToast(m) {
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = m;
+    els.toast.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  function openScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(`screen-${id}`).classList.add('active');
+    const map = { 'street':'📍 Улица', 'work-list':'💼 Работы', 'job':'💼 Работа', 'realestate':'🏠 Недвижимость', 'cars':'🚗 Машины', 'promo':'🎁 Промо', 'kiosk':'🛒 Ларёк', 'restaurant':'🍽 Ресторан' };
+    els.loc.textContent = map[id] || '📍';
+    if (id === 'realestate') renderRE();
+    if (id === 'cars') renderCars();
+    if (id === 'promo') renderPromos();
+    if (id === 'work-list') renderWorks();
+    updateUI();
+  }
+
+  function renderWorks() {
+    els.workList.innerHTML = '';
+    JOBS.forEach(j => {
+      const locked = state.level < j.reqLvl;
+      const div = document.createElement('div');
+      div.className = `work-item ${locked ? 'locked' : ''}`;
+      if (!locked) div.onclick = () => startJob(j.id);
+      div.innerHTML = `
+        <span class="w-icon">${j.icon}</span>
+        <div class="w-info"><div class="w-name">${j.name}</div><div class="w-sal">~${j.pay.toLocaleString()}₽ / цикл</div></div>
+        ${locked ? `<span class="w-req">🔒 Ур. ${j.reqLvl}</span>` : `<span class="w-req" style="background:#4ecdc4;color:#111;">✔️ Доступно</span>`}
+      `;
+      els.workList.appendChild(div);
+    });
+  }
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function renderJobTasks() {
+    const job = JOBS.find(j => j.id === state.currentJob);
+    if (!job) return;
+    
+    els.jobGrid.innerHTML = '';
+    const tasksCopy = [...job.tasks];
+    shuffleArray(tasksCopy).forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = `job-btn ${t.type === 'c' ? 'correct' : 'wrong'}`;
+      btn.innerHTML = `<span class="jb-icon">${t.icon}</span><span class="jb-label">${t.label}</span><span class="jb-val">${t.val}</span>`;
+      btn.onclick = () => t.type === 'c' ? correctAction() : wrongAction();
+      els.jobGrid.appendChild(btn);
+    });
+  }
+
+  function startJob(id) {
+    openScreen('job');
+    state.currentJob = id;
+    state.jobProgress = 0;
+    const job = JOBS.find(j => j.id === id);
+    els.jobTitle.textContent = job.name;
+    els.jobDesc.textContent = job.desc;
+    const bonus = getBonus();
+    const pay = Math.floor(job.pay * (1 + bonus / 100));
+    els.jobReward.textContent = `+${pay.toLocaleString()}₽ (+${bonus}%)`;
+    els.jobImg.src = `image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%23222' width='64' height='64' rx='14'/%3E%3Ctext x='32' y='40' font-size='28' text-anchor='middle'%3E${job.icon}%3C/text%3E%3C/svg%3E`;
+    updateJobUI();
+    renderJobTasks();
+  }
+
+  function updateJobUI() {
+    els.jobProgBar.style.width = `${Math.max(0, state.jobProgress)}%`;
+    els.jobProgVal.textContent = `${Math.max(0, Math.floor(state.jobProgress))}%`;
+  }
+
+  function correctAction() {
+    if (!state.currentJob) return;
+    const gain = Math.floor(Math.random() * 5) + 8; // 8-12
+    state.jobProgress += gain;
+    updateJobUI();
+    if (state.jobProgress >= 100) {
+      completeJob();
+    } else {
+      // Shuffle after correct action
+      renderJobTasks();
+    }
+  }
+
+  function wrongAction() {
+    if (!state.currentJob) return;
+    state.jobProgress = Math.max(0, state.jobProgress - (Math.floor(Math.random() * 5) + 8));
+    updateJobUI();
+    // Shuffle even on wrong action to keep them guessing
+    renderJobTasks();
+  }
+
+  function completeJob() {
+    const job = JOBS.find(j => j.id === state.currentJob);
+    const bonus = getBonus();
+    const total = Math.floor(job.pay * (1 + bonus / 100));
+    state.balance += total;
+    addXP(job.xp);
+    showToast(`✅ Смена завершена! +${total.toLocaleString()}₽`);
+    setTimeout(() => startJob(state.currentJob), 1000);
+  }
+
+  function addXP(amt) {
+    state.xp += amt;
+    while (state.xp >= state.xpToNext) {
+      state.xp -= state.xpToNext;
+      state.level++;
+      state.xpToNext = Math.floor(state.xpToNext * 1.5);
+      showToast(`🆙 Новый уровень: ${state.level}!`);
+    }
+    updateUI();
+  }
+
+  function buyFood(price, buff) {
+    if (state.balance >= price) {
+      state.balance -= price;
+      state.satiety = Math.min(100, state.satiety + buff);
+      showToast(`🍔 +${buff} сытости`);
+      updateUI();
+    } else showToast('❌ Не хватает денег!');
+  }
+
+  function renderRE() {
+    els.reBonus.textContent = state.assets.re.reduce((s, id) => s + (RE_ITEMS.find(x => x.id === id)?.bonus || 0), 0);
+    els.reList.innerHTML = '';
+    RE_ITEMS.forEach(i => {
+      const owned = state.assets.re.includes(i.id);
+      const d = document.createElement('div');
+      d.className = `asset-card ${owned ? 'owned' : ''}`;
+      d.innerHTML = `
+        <span class="a-icon">${i.icon}</span>
+        <div class="a-info"><div class="a-name">${i.name}</div><div class="a-bonus">+${i.bonus}% к заработку</div></div>
+        <button class="asset-btn ${owned ? 'owned-btn' : (state.balance < i.price ? 'disabled' : '')}" data-price="${i.price}" onclick="buyAsset('re','${i.id}',${i.price})">
+          ${owned ? '✅' : `${(i.price/1000).toFixed(0)}к₽`}
+        </button>`;
+      els.reList.appendChild(d);
+    });
+  }
+
+  function renderCars() {
+    els.carBonus.textContent = state.assets.cars.reduce((s, id) => s + (CAR_ITEMS.find(x => x.id === id)?.bonus || 0), 0);
+    const draw = (cls, cont) => {
+      document.getElementById(cont).innerHTML = '';
+      CAR_ITEMS.filter(c => c.cls === cls).forEach(i => {
+        const owned = state.assets.cars.includes(i.id);
+        const d = document.createElement('div');
+        d.className = `asset-card ${owned ? 'owned' : ''}`;
+        d.innerHTML = `
+          <span class="a-icon">${i.icon}</span>
+          <div class="a-info"><div class="a-name">${i.name}</div><div class="a-bonus">+${i.bonus}% к заработку</div></div>
+          <button class="asset-btn ${owned ? 'owned-btn' : (state.balance < i.price ? 'disabled' : '')}" data-price="${i.price}" onclick="buyAsset('cars','${i.id}',${i.price})">
+            ${owned ? '✅' : `${i.price.toLocaleString()}₽`}
+          </button>`;
+        document.getElementById(cont).appendChild(d);
+      });
+    };
+    draw('lw', 'cars-low'); draw('md', 'cars-mid'); draw('hi', 'cars-high');
+  }
+
+  function buyAsset(type, id, price) {
+    if (state.assets.re.includes(id) || state.assets.cars.includes(id)) return;
+    if (state.balance < price) return showToast('❌ Не хватает денег!');
+    state.balance -= price;
+    if (type === 're') state.assets.re.push(id); else state.assets.cars.push(id);
+    showToast(`🎉 Покупка успешна!`);
+    if (type === 're') renderRE(); else renderCars();
+    updateUI();
+  }
+
+  function renderPromos() {
+    const l = document.getElementById('promo-list'); l.innerHTML = '';
+    const inp = document.getElementById('promo-input');
+    if (state.promoCode.used) { inp.value = 'RELEASE'; inp.classList.add('used'); inp.disabled = true; }
+    else { inp.value = ''; inp.classList.remove('used'); inp.disabled = false; }
+    state.promos.forEach(p => {
+      const d = document.createElement('div');
+      d.style.cssText = 'background:rgba(155,89,182,0.2); padding:10px; border-radius:10px; color:#fff; font-size:12px; display:flex; justify-content:space-between;';
+      d.innerHTML = `<span>🎁 Код "${p.code}"</span><span style="color:#ffd700">Активирован</span>`;
+      l.appendChild(d);
+    });
+  }
+
+  function usePromo() {
+    const code = document.getElementById('promo-input').value.trim().toUpperCase();
+    if (code === 'RELEASE' && !state.promoCode.used) {
+      state.balance += 100000000;
+      state.promoCode.used = true;
+      state.promos.push({ code: 'RELEASE', reward: '100M₽' });
+      showToast('💰 +100,000,000₽!');
+      renderPromos(); updateUI();
+    } else if (state.promoCode.used && code === 'RELEASE') showToast('⚠️ Уже использован!');
+    else showToast('❌ Неверный код!');
+  }
+
+  updateUI();
+</script>
+</body>
+</html>
+```
